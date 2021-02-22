@@ -13,6 +13,7 @@ and since Bareos version 20 this project adheres to [Semantic Versioning](https:
 - [Issue #1316]: storage daemon loses a configured device instance [PR #739]
 
 
+
 ### Added
 - added reload commands to systemd service [PR #694]
 - Build the package **bareos-filedaemon-postgresql-python-plugin** also for Debian, Ubuntu and UCS (deb packages) [PR #723].
