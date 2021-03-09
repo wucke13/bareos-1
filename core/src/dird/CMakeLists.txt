@@ -1,6 +1,6 @@
 #   BAREOS® - Backup Archiving REcovery Open Sourced
 #
-#   Copyright (C) 2017-2020 Bareos GmbH & Co. KG
+#   Copyright (C) 2017-2021 Bareos GmbH & Co. KG
 #
 #   This program is Free Software; you can redistribute it and/or
 #   modify it under the terms of version three of the GNU Affero General Public
@@ -170,10 +170,18 @@ set(DBCHECK_LIBRARIES bareossql bareos bareosfind bareoscats)
 
 target_link_libraries(bareos-dbcheck ${DBCHECK_LIBRARIES})
 
-# is not built by default
-
-# add_executable(testfind ${TSTFNDSRCS}) target_link_libraries(testfind bareos
-# bareosfind jansson ${OPENSSL_LIBS} acl cap lzo2 )
+add_executable(testfind ${TSTFNDSRCS})
+target_link_libraries(
+  testfind
+  bareos
+  bareosfind
+  bareossql
+  jansson
+  ${OPENSSL_LIBS}
+  acl
+  cap
+  lzo2
+)
 
 install(TARGETS bareos-dir bareos-dbcheck DESTINATION "${sbindir}")
 

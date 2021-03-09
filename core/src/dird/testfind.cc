@@ -2,7 +2,7 @@
    BAREOS® - Backup Archiving REcovery Open Sourced
 
    Copyright (C) 2000-2008 Free Software Foundation Europe e.V.
-   Copyright (C) 2016-2019 Bareos GmbH & Co. KG
+   Copyright (C) 2016-2021 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -29,9 +29,27 @@
 
 #include "include/bareos.h"
 #include "dird/dird.h"
+#include "dird/dird_conf.h"
+#include "dird/dird_globals.h"
+#include "dird/jcr_private.h"
+#include "lib/parse_conf.h"
+
 #include "findlib/find.h"
 #include "lib/mntent_cache.h"
-#include "ch.h"
+#include "filed/fd_plugins.h"
+#include "include/ch.h"
+
+int encode_attribsEx(JobControlRecord* jcr,
+                     char* attribsEx,
+                     FindFilesPacket* ff_pkt);
+
+static JobControlRecord* NewDirectorJcr()
+{
+  JobControlRecord* jcr = new_jcr(NULL);
+  jcr->impl = new JobControlRecordPrivate;
+  return jcr;
+}
+
 
 #if defined(HAVE_WIN32)
 #  define isatty(fd) (fd == 0)
@@ -41,7 +59,7 @@ using namespace directordaemon;
 
 /* Dummy functions */
 void GeneratePluginEvent(JobControlRecord* jcr,
-                         bEventType eventType,
+                         filedaemon::bEventType eventType,
                          void* value)
 {
 }
@@ -172,7 +190,7 @@ int main(int argc, char* const* argv)
     my_config = NULL;
   }
 
-  RecentJobResultsList::Cleanup();
+  // RecentJobResultsList::Cleanup();
   CleanupJcrChain();
 
   /* Clean up fileset */
@@ -431,9 +449,9 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
 
   for (;;) {
     if (include) {
-      num = jcr_fileset->num_includes;
+      num = jcr_fileset->include_items.size();
     } else {
-      num = jcr_fileset->num_excludes;
+      num = jcr_fileset->exclude_items.size();
     }
     for (int i = 0; i < num; i++) {
       IncludeExcludeItem* ie;
@@ -461,8 +479,8 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
         fileset->exclude_list.append(fileset->incexe);
       }
 
-      for (j = 0; j < ie->num_opts; j++) {
-        FileOptions* fo = ie->opts_list[j];
+      for (std::size_t j = 0; j < ie->file_options_list.size(); j++) {
+        FileOptions* fo = ie->file_options_list[j];
 
         current_opts = (findFOPTS*)malloc(sizeof(findFOPTS));
         memset(current_opts, 0, sizeof(findFOPTS));
