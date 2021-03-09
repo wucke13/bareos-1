@@ -1,6 +1,6 @@
 #   BAREOS® - Backup Archiving REcovery Open Sourced
 #
-#   Copyright (C) 2017-2020 Bareos GmbH & Co. KG
+#   Copyright (C) 2017-2021 Bareos GmbH & Co. KG
 #
 #   This program is Free Software; you can redistribute it and/or
 #   modify it under the terms of version three of the GNU Affero General Public
@@ -148,9 +148,14 @@ if(HAVE_WIN32)
   list(APPEND BLSSRCS ../win32/stored/blsres.rc)
 endif()
 
-set(BEXTRACTSRS bextract.cc)
+set(BEXTRACTSRCS bextract.cc)
 if(HAVE_WIN32)
-  list(APPEND BEXTRACTSRS ../win32/stored/bextractres.rc)
+  list(APPEND BEXTRACTSRCS ../win32/stored/bextractres.rc)
+endif()
+
+set(BBACKUPSRCS bbackup.cc)
+if(HAVE_WIN32)
+  list(APPEND BBACKUPSRCS ../win32/stored/bbackupres.rc)
 endif()
 
 set(BSCANSRCS bscan.cc)
@@ -231,8 +236,11 @@ target_link_libraries(bareos-sd stored_objects ${BAREOS_SD_LIBRARIES})
 add_executable(bls ${BLSSRCS})
 target_link_libraries(bls bareos bareossd bareosfind)
 
-add_executable(bextract ${BEXTRACTSRS})
+add_executable(bextract ${BEXTRACTSRCS})
 target_link_libraries(bextract bareossd bareosfind bareos)
+
+add_executable(bbackup ${BBACKUPSRCS})
+target_link_libraries(bbackup bareossd bareosfind bareos)
 
 add_executable(bscan ${BSCANSRCS})
 target_link_libraries(bscan bareos bareossd bareosfind bareossql bareoscats)
