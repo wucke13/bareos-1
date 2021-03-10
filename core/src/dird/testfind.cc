@@ -429,25 +429,6 @@ static void CountFiles(FindFilesPacket* ar)
 }
 
 
-static void append_file(JobControlRecord* jcr,
-                        findIncludeExcludeItem* incexe,
-                        const char* buf,
-                        bool IsFile)
-{
-  if (IsFile) {
-    /*
-     * Sanity check never append empty file patterns.
-     */
-    if (strlen(buf) > 0) { incexe->name_list.append(new_dlistString(buf)); }
-  } else if (me->plugin_directory) {
-    incexe->plugin_list.append(new_dlistString(buf));
-  } else {
-    Jmsg(jcr, M_FATAL, 0,
-         _("Plugin Directory not defined. Cannot use plugin: \"%s\"\n"), buf);
-  }
-}
-
-
 static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
 {
   FilesetResource* jcr_fileset = jcr->impl->res.fileset;
@@ -458,7 +439,7 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
   findFOPTS* current_opts;
 
   fileset = (findFILESET*)malloc(sizeof(findFILESET));
-  // memset(fileset, 0, sizeof(findFILESET));
+  memset(fileset, 0, sizeof(findFILESET));
   ff->fileset = fileset;
 
   fileset->state = state_none;
@@ -485,7 +466,7 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
         FileOptions* fo = ie->file_options_list[j];
 
         current_opts = (findFOPTS*)malloc(sizeof(findFOPTS));
-        // memset(current_opts, 0, sizeof(findFOPTS));
+        memset(current_opts, 0, sizeof(findFOPTS));
         fileset->incexe->current_opts = current_opts;
         fileset->incexe->opts_list.append(current_opts);
 
