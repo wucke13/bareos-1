@@ -107,9 +107,8 @@ static void usage()
 
 int main(int argc, char* const* argv)
 {
-  FindFilesPacket* ff;
   const char* configfile = "bareos-dir.conf";
-  const char* fileset_name = "Windows-Full-Set";
+  const char* fileset_name = "SelfTest";
   int ch, hard_links;
 
   OSDependentInit();
@@ -118,7 +117,6 @@ int main(int argc, char* const* argv)
   tzset();
   bindtextdomain("bareos", LOCALEDIR);
   textdomain("bareos");
-
   while ((ch = getopt(argc, argv, "ac:d:f:?")) != -1) {
     switch (ch) {
       case 'a': /* print extended attributes *debug* */
@@ -178,7 +176,7 @@ int main(int argc, char* const* argv)
     exit(1);
   }
 
-  ff = init_find_files();
+  FindFilesPacket* ff = init_find_files();
 
   CopyFileset(ff, jcr);
 
@@ -430,6 +428,26 @@ static void CountFiles(FindFilesPacket* ar)
   }
 }
 
+
+static void append_file(JobControlRecord* jcr,
+                        findIncludeExcludeItem* incexe,
+                        const char* buf,
+                        bool IsFile)
+{
+  if (IsFile) {
+    /*
+     * Sanity check never append empty file patterns.
+     */
+    if (strlen(buf) > 0) { incexe->name_list.append(new_dlistString(buf)); }
+  } else if (me->plugin_directory) {
+    incexe->plugin_list.append(new_dlistString(buf));
+  } else {
+    Jmsg(jcr, M_FATAL, 0,
+         _("Plugin Directory not defined. Cannot use plugin: \"%s\"\n"), buf);
+  }
+}
+
+
 static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
 {
   FilesetResource* jcr_fileset = jcr->impl->res.fileset;
@@ -440,7 +458,7 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
   findFOPTS* current_opts;
 
   fileset = (findFILESET*)malloc(sizeof(findFILESET));
-  memset(fileset, 0, sizeof(findFILESET));
+  // memset(fileset, 0, sizeof(findFILESET));
   ff->fileset = fileset;
 
   fileset->state = state_none;
@@ -454,36 +472,20 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
       num = jcr_fileset->exclude_items.size();
     }
     for (int i = 0; i < num; i++) {
-      IncludeExcludeItem* ie;
+      IncludeExcludeItem* ie = jcr_fileset->include_items[i];
       int j, k;
 
       if (include) {
-        ie = jcr_fileset->include_items[i];
-
-        /* New include */
-        fileset->incexe
-            = (findIncludeExcludeItem*)malloc(sizeof(findIncludeExcludeItem));
-        memset(fileset->incexe, 0, sizeof(findIncludeExcludeItem));
-        fileset->incexe->opts_list.init(1, true);
-        fileset->incexe->name_list.init(0, 0);
-        fileset->include_list.append(fileset->incexe);
+        new_include(fileset);
       } else {
-        ie = jcr_fileset->exclude_items[i];
-
-        /* New exclude */
-        fileset->incexe
-            = (findIncludeExcludeItem*)malloc(sizeof(findIncludeExcludeItem));
-        memset(fileset->incexe, 0, sizeof(findIncludeExcludeItem));
-        fileset->incexe->opts_list.init(1, true);
-        fileset->incexe->name_list.init(0, 0);
-        fileset->exclude_list.append(fileset->incexe);
+        new_exclude(fileset);
       }
 
       for (std::size_t j = 0; j < ie->file_options_list.size(); j++) {
         FileOptions* fo = ie->file_options_list[j];
 
         current_opts = (findFOPTS*)malloc(sizeof(findFOPTS));
-        memset(current_opts, 0, sizeof(findFOPTS));
+        // memset(current_opts, 0, sizeof(findFOPTS));
         fileset->incexe->current_opts = current_opts;
         fileset->incexe->opts_list.append(current_opts);
 
@@ -536,9 +538,10 @@ static bool CopyFileset(FindFilesPacket* ff, JobControlRecord* jcr)
         }
       }
 
+      Dmsg2(200, "namelist append: %s\n", (const char*)ie->name_list.get(j));
       for (j = 0; j < ie->name_list.size(); j++) {
         fileset->incexe->name_list.append(
-            strdup((const char*)ie->name_list.get(j)));
+            new_dlistString((const char*)ie->name_list.get(j)));
       }
     }
 
