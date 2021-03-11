@@ -7,6 +7,8 @@ set -u
 TestName="$(basename "$(pwd)")"
 export TestName
 
+JobName=backup-bareos-fd
+
 #shellcheck source=../environment.in
 . ./environment
 
@@ -19,28 +21,30 @@ start_test
 
 run_bareos "$@"
 
-echo "status conf" | bin/bconsole -c etc/bareos/bconsole-acl-none.conf > ${logdir}/acl-none.log
-echo "status conf" | bin/bconsole -c etc/bareos/bconsole-acl-status.conf > ${logdir}/acl-status.log
-echo "status conf" | bin/bconsole -c etc/bareos/bconsole-acl-status-conf.conf > ${logdir}/acl-status-conf.log
+# echo "status conf" | bin/bconsole -c etc/bareos/bconsole-acl-none.conf > ${logdir}/acl-none.log
+# echo "status conf" | bin/bconsole -c etc/bareos/bconsole-acl-status.conf > ${logdir}/acl-status.log
+# echo "status conf" | bin/bconsole -c etc/bareos/bconsole-acl-status-conf.conf > ${logdir}/acl-status-conf.log
 
-export estat=0
+# Directory to backup.
+# This directory will be created by setup_data "$@"().
+BackupDirectory="${tmp}/data"
 
-set_error() {
-  estat=1
-  echo "ACL-test failed, see ${logdir}/$1 for details"
-}
+# Use a tgz to setup data to be backed up.
+# Data will be placed at "${tmp}/data/".
+setup_data "$@"
 
-grep -q "status: is an invalid command" ${logdir}/acl-none.log || \
-  set_error "acl-none.log"
+start_test
 
-grep -q "status conf: is an invalid command" ${logdir}/acl-status.log || \
-  set_error "acl-status.log"
+cat <<END_OF_DATA >"$tmp/bconcmds"
+@$out /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File pool=Full
+run job=$JobName yes
+wait
+END_OF_DATA
+run_bareos "$@"
 
-# this will match "No deprecated.." and "Deprecated ..."
-# which matches for all database types
-grep -q "eprecated configuration settings detected" ${logdir}/acl-status-conf.log || \
-  set_error "acl-status-conf.log"
-
-stop_bareos
+#stop_bareos
 
 end_test
