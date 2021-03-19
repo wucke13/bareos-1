@@ -46,6 +46,7 @@ Vendor: 	The Bareos Team
 %define install_suse_fw 0
 %define systemd_support 0
 %define python_plugins 1
+%define contrib 1
 
 # cmake build directory
 %define CMAKE_BUILDDIR       cmake-build
@@ -171,8 +172,6 @@ BuildRequires: git-core
 
 Source0: %{name}-%{version}.tar.gz
 
-BuildRequires: pam-devel
-
 BuildRequires: cmake >= 3.12
 BuildRequires: gcc
 BuildRequires: gcc-c++
@@ -180,13 +179,15 @@ BuildRequires: make
 BuildRequires: glibc
 BuildRequires: glibc-devel
 BuildRequires: ncurses-devel
+BuildRequires: pam-devel
 BuildRequires: perl
+BuildRequires: pkgconfig
+BuildRequires: python-rpm-macros
 BuildRequires: readline-devel
+BuildRequires: libacl-devel
 BuildRequires: libstdc++-devel
 BuildRequires: zlib-devel
 BuildRequires: openssl-devel
-BuildRequires: libacl-devel
-BuildRequires: pkgconfig
 BuildRequires: lzo-devel
 BuildRequires: logrotate
 %if 0%{?build_sqlite3}
@@ -291,6 +292,8 @@ BuildRequires: lsb-release
 %define _use_internal_dependency_generator 0
 %define our_find_requires %{_builddir}/%{name}-%{version}/find_requires
 %endif
+
+%define replace_python_shebang sed -i '1s|^#!.*|#!%{__python3} %{py3_shbang_opts}|'
 
 Summary:    Backup Archiving REcovery Open Sourced - metapackage
 Requires:   %{name}-director = %{version}
@@ -624,6 +627,7 @@ Keeps bareos/plugins/vmware_plugin subdirectory, which have been used in Bareos 
 
 # VMware Plugin END
 %endif
+
 %description director-python2-plugin
 %{dscr}
 
@@ -785,19 +789,50 @@ Requires:   mod_php
 Requires:   httpd
 %endif
 
-
-
 %description webui
-Bareos - Backup Archiving Recovery Open Sourced. \
-Bareos is a set of computer programs that permit you (or the system \
-administrator) to manage backup, recovery, and verification of computer \
-data across a network of computers of different kinds. In technical terms, \
-it is a network client/server based backup program. Bareos is relatively \
-easy to use and efficient, while offering many advanced storage management \
-features that make it easy to find and recover lost or damaged files. \
-Bareos source code has been released under the AGPL version 3 license.
+%{dscr}
 
 This package contains the webui (Bareos Web User Interface).
+
+%if 0%{?contrib}
+
+%package     contrib-tools
+Summary:     Additional tools, not part of the Bareos project
+Group:       Productivity/Archiving/Backup
+Requires:    python-bareos
+Requires:    bareos-filedaemon
+
+%description contrib-tools
+%{dscr}
+
+This package provides some additional tools, not part of the Bareos project.
+
+
+%package     contrib-filedaemon-python-plugins
+Summary:     Additional File Daemon Python plugins, not part of the Bareos project
+Group:       Productivity/Archiving/Backup
+Requires:    bareos-filedaemon-python-plugin
+
+%description contrib-filedaemon-python-plugins
+%{dscr}
+
+This package provides additional File Daemon Python plugins, not part of the Bareos project.
+
+
+%package     contrib-director-python-plugins
+Summary:     Additional Director Python plugins, not part of the Bareos project
+Group:       Productivity/Archiving/Backup
+Requires:    bareos-director-python-plugin
+
+%description contrib-director-python-plugins
+%{dscr}
+
+This package provides additional Bareos Director Python plugins, not part of the Bareos project.
+
+# endif: contrib
+%endif
+
+
 %description client
 %{dscr}
 
@@ -912,6 +947,11 @@ This package contains the tray monitor (QT based).
 # this is a hack so we always build in "bareos" and not in "bareos-version"
 %setup -c -n bareos
 mv bareos-*/* .
+%if 0%{?contrib}
+%replace_python_shebang contrib/misc/bsmc/bin/bsmc
+%replace_python_shebang contrib/misc/triggerjob/bareos-triggerjob.py
+%endif
+
 
 %build
 # Cleanup defined in Fedora Packaging:Guidelines
@@ -1667,6 +1707,37 @@ mkdir -p %{?buildroot}/%{_libdir}/bareos/plugins/vmware_plugin
 %attr(0640, %{director_daemon_user}, %{daemon_group}) %{_sysconfdir}/%{name}/bareos-dir.d/job/BackupRados.conf.example
 %attr(0640, %{director_daemon_user}, %{daemon_group}) %{_sysconfdir}/%{name}/bareos-dir.d/job/RestoreRados.conf.example
 %endif
+
+%if 0%{?contrib}
+
+%files       contrib-tools
+%defattr(-, root, root)
+%{_bindir}/bareos-triggerjob.py
+%{_bindir}/bsmc
+%attr(0640, %{daemon_user}, %{daemon_group}) %config(noreplace) %{_sysconfdir}/bareos/bsmc.conf
+
+
+%files       contrib-filedaemon-python-plugins
+%defattr(-, root, root)
+%{plugin_dir}/BareosFdMySQLClass.py*
+%{plugin_dir}/BareosFdOracleClass.py*
+%{plugin_dir}/BareosFdPgSQLClass.py*
+%{plugin_dir}/BareosFdTaskClass.py*
+%{plugin_dir}/BareosFdXenServerClass.py*
+%{plugin_dir}/bareos-fd-mysql.py*
+%{plugin_dir}/bareos-fd-oracle.py*
+%{plugin_dir}/bareos-fd-pgsql.py*
+%{plugin_dir}/bareos-fd-xenserver.py*
+
+
+%files       contrib-director-python-plugins
+%defattr(-, root, root)
+%{plugin_dir}/BareosDirPluginNscaSender.py*
+%{plugin_dir}/bareos-dir-nsca-sender.py*
+
+# endif: contrib
+%endif
+
 
 #
 # Define some macros for updating the system settings.
