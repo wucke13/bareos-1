@@ -38,53 +38,6 @@ copy_configs()
     done
 }
 
-#
-# activates a plugin by copying to $plugindirtmp.
-# For this, daemons must have following setting:
-# Plugin Directory = @plugindirtmp@
-#
-enable_plugin()
-{
-   RC=0
-   PLUGIN="$1"
-
-   if [ -z "$PLUGIN" ]; then
-      set_error "enable_plugin: no plugin name given."
-      exit 1
-   fi
-
-   if ! cp "$plugindir/${PLUGIN}".* "$plugindirtmp/"; then
-      set_error "enable_plugin: failed to enable ${PLUGIN} plugin."
-      RC=1
-      exit 1
-   fi
-
-   print_debug "plugin ${PLUGIN} enabled"
-
-   return $RC
-}
-
-disable_plugin()
-{
-   RC=0
-   PLUGIN="$1"
-
-   if [ -z "$PLUGIN" ]; then
-      set_error "enable_plugin: no plugin name given."
-      exit 1
-   fi
-
-   if ! rm "$plugindirtmp/${PLUGIN}".*; then
-      set_error "disable_plugin: failed to disable ${PLUGIN} plugin."
-      RC=1
-      exit 1
-   fi
-
-   print_debug "plugin ${PLUGIN} disabled"
-
-   return $RC
-}
-
 check_encoding()
 {
    if "${BAREOS_DIRECTOR_BINARY}" -d50 -t 2>&1 | grep 'Wanted SQL_ASCII, got UTF8' >/dev/null
