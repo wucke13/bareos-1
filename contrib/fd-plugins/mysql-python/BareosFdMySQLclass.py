@@ -86,7 +86,10 @@ class BareosFdMySQLclass (BareosFdPluginBaseclass):
         else:
             showDbCommand = "mysql %s -B -N -e 'show databases'" % self.mysqlconnect
             showDb = Popen(showDbCommand, shell=True, stdout=PIPE, stderr=PIPE)
-            self.databases = showDb.stdout.read().splitlines()
+            databases = showDb.stdout.read()
+            if isinstance(databases, bytes):
+                databases = databases.decode('UTF-8')
+            self.databases = databases.splitlines()
             if 'performance_schema' in self.databases:
                 self.databases.remove('performance_schema')
             if 'information_schema' in self.databases:
@@ -199,13 +202,13 @@ class BareosFdMySQLclass (BareosFdPluginBaseclass):
             try:
                 if IOP.flags & (os.O_CREAT | os.O_WRONLY):
                     self.file = open(IOP.fname, 'wb');
-            except Exception,msg:
+            except Exception as exception:
                 IOP.status = -1;
                 DebugMessage(
                     100,
                     "Error opening file: " + IOP.fname + "\n"
                 )
-                print msg;
+                print(exception);
                 return bRC_Error
             return bRC_OK
 
@@ -220,11 +223,11 @@ class BareosFdMySQLclass (BareosFdPluginBaseclass):
                 self.file.write(IOP.buf);
                 IOP.status = IOP.count
                 IOP.io_errno = 0
-            except IOError,msg:
+            except IOError as msg:
                 IOP.io_errno = -1
                 DebugMessage(
                     100,
-                    "Error writing data: " + msg + "\n"
+                    "Error writing data: " + str(msg) + "\n"
                 )
             return bRC_OK
 
