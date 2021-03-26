@@ -3,7 +3,7 @@
 
    Copyright (C) 2001-2012 Free Software Foundation Europe e.V.
    Copyright (C) 2011-2016 Planets Communications B.V.
-   Copyright (C) 2013-2020 Bareos GmbH & Co. KG
+   Copyright (C) 2013-2021 Bareos GmbH & Co. KG
 
    This program is Free Software; you can redistribute it and/or
    modify it under the terms of version three of the GNU Affero General Public
@@ -970,7 +970,7 @@ static void ListRunningJobs(UaContext* ua)
   endeach_jcr(jcr);
 
   if (njobs == 0) {
-    /* Note the following message is used in regress -- don't change */
+    /* Note the following message is used by external programs -- don't change */
     if (!ua->api) ua->SendMsg(_("No Jobs running.\n====\n"));
     Dmsg0(200, "leave list_run_jobs()\n");
     return;
