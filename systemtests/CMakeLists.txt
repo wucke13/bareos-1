@@ -583,8 +583,9 @@ set(tests_dir ${PROJECT_BINARY_DIR}/tests)
 set(SYSTEM_TESTS
     bareos
     bareos-acl
-    bscan
     bconsole-status-client
+    block-size
+    bscan
     client-initiated
     config-dump
     config-syntax-crash
