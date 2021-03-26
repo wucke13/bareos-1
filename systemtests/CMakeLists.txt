@@ -612,6 +612,7 @@ set(SYSTEM_TESTS
     scheduler-backup
     sparse-file
     spool
+    truncate-command
     upgrade-database
     virtualfull
     virtualfull-bscan
