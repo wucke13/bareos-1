@@ -599,6 +599,7 @@ set(SYSTEM_TESTS
     multiplied-device
     notls
     passive
+    quota-softquota
     reload-add-client
     reload-add-duplicate-job
     reload-add-empty-job
