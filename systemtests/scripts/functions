@@ -481,16 +481,40 @@ change_files()
    return 0
 }
 
+get_real_file_size()
+{
+   FILE="$1"
+   SIZE=-1
+   if [ -e "$FILE" ]; then
+     # -B: block-size
+     SIZE="$(du -B 1 "$FILE" | cut -f 1)"
+   fi
+   print_debug "$FILE: $SIZE bytes"
+   echo "$SIZE"
+}
+
 get_file_size()
 {
    FILE="$1"
    SIZE=-1
    if [ -e "$FILE" ]; then
-     SIZE="$(du "$FILE" | cut -f 1)"
+     SIZE="$(du -B 1 --apparent-size "$FILE" | cut -f 1)"
    fi
    print_debug "$FILE: $SIZE bytes"
    echo "$SIZE"
 }
+
+# get_file_size()
+# {
+#     # get file size in bytes
+#    FILE="$1"
+#    SIZE=-1
+#    if [ -e "$FILE" ]; then
+#         SIZE="$(stat --printf="%s" "$FILE")"
+#    fi
+#    print_debug "$FILE: $SIZE bytes"
+#    echo "$SIZE"
+# }
 
 check_for_zombie_jobs()
 {
