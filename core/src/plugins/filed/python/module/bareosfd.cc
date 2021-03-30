@@ -2136,6 +2136,7 @@ static void PySavePacket_dealloc(PySavePacket* self)
 {
   if (self->fname) { Py_XDECREF(self->fname); }
   if (self->link) { Py_XDECREF(self->link); }
+  if (self->statp) { Py_XDECREF(self->statp); }
   if (self->flags) { Py_XDECREF(self->flags); }
   if (self->object_name) { Py_XDECREF(self->object_name); }
   if (self->object) { Py_XDECREF(self->object); }
@@ -2218,6 +2219,7 @@ static int PyRestorePacket_init(PyRestorePacket* self,
  */
 static void PyRestorePacket_dealloc(PyRestorePacket* self)
 {
+  if (self->statp) { Py_XDECREF(self->statp); }
   PyObject_Del(self);
 }
 
@@ -2388,8 +2390,8 @@ static int PyXattrPacket_init(PyXattrPacket* self,
  */
 static void PyXattrPacket_dealloc(PyXattrPacket* self)
 {
-  if (self->value) { Py_XDECREF(self->value); }
   if (self->name) { Py_XDECREF(self->name); }
+  if (self->value) { Py_XDECREF(self->value); }
   PyObject_Del(self);
 }
 
